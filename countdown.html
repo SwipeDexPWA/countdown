@@ -4,138 +4,125 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>PWA Expiration Demo</title>
+<title>PWA Reseller License System</title>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.16/dist/css/uikit.min.css" />
 <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.16/dist/js/uikit.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.16/dist/js/uikit-icons.min.js"></script>
 
 </head>
+
 <body class="uk-container uk-padding">
 
-<h1 class="uk-heading-small">PWA Subscription Countdown</h1>
+<h2>Reseller PWA License System</h2>
 
 <div id="status" class="uk-alert-primary uk-padding-small uk-margin" uk-alert>
-    Checking subscription...
+Loading license...
 </div>
 
+<div id="app">
+
+<!-- COUNTDOWN -->
 <div id="countdown"
      class="uk-grid-small uk-child-width-auto uk-text-center uk-margin-large-top"
      uk-grid
      uk-countdown>
 
-    <div>
-        <div class="uk-h1 uk-countdown-number uk-countdown-days"></div>
-        <div class="uk-countdown-label">Days</div>
-    </div>
-
+    <div><div class="uk-h1 uk-countdown-number uk-countdown-days"></div><div>Days</div></div>
     <div class="uk-h1">:</div>
-
-    <div>
-        <div class="uk-h1 uk-countdown-number uk-countdown-hours"></div>
-        <div class="uk-countdown-label">Hours</div>
-    </div>
-
+    <div><div class="uk-h1 uk-countdown-number uk-countdown-hours"></div><div>Hours</div></div>
     <div class="uk-h1">:</div>
-
-    <div>
-        <div class="uk-h1 uk-countdown-number uk-countdown-minutes"></div>
-        <div class="uk-countdown-label">Minutes</div>
-    </div>
-
+    <div><div class="uk-h1 uk-countdown-number uk-countdown-minutes"></div><div>Minutes</div></div>
     <div class="uk-h1">:</div>
+    <div><div class="uk-h1 uk-countdown-number uk-countdown-seconds"></div><div>Seconds</div></div>
 
-    <div>
-        <div class="uk-h1 uk-countdown-number uk-countdown-seconds"></div>
-        <div class="uk-countdown-label">Seconds</div>
-    </div>
+</div>
 
 </div>
 
 <script>
+document.addEventListener("DOMContentLoaded", () => {
 
-//////////////////////////////////////////////////////
-// CONFIG
-//////////////////////////////////////////////////////
+    const status = document.getElementById("status");
+    const countdownEl = document.getElementById("countdown");
 
-// Remote JSON license file
-const LICENSE_URL =
-"client1.json";
+    const LICENSE_URL = "client1.json";
 
-// Redirect after expiration
-const REDIRECT_URL =
-"https://m.me/joelgallinero";
+    fetch(LICENSE_URL)
+    .then(res => {
+        if (!res.ok) throw new Error("License file not found");
+        return res.json();
+    })
+    .then(license => {
 
-//////////////////////////////////////////////////////
-// FETCH LICENSE
-//////////////////////////////////////////////////////
+        const expireTime = new Date(license.expires).getTime();
+        const redirectURL = license.redirect;
 
-fetch(LICENSE_URL)
-
-.then(response => response.json())
-
-.then(data => {
-
-    const expireDate = data.expires;
-
-    //////////////////////////////////////////////////////
-    // UPDATE UIKIT COUNTDOWN
-    //////////////////////////////////////////////////////
-
-    const countdown = document.getElementById("countdown");
-
-    countdown.setAttribute(
-        "uk-countdown",
-        `date: ${expireDate}`
-    );
-
-    //////////////////////////////////////////////////////
-    // REINITIALIZE UIKIT COUNTDOWN
-    //////////////////////////////////////////////////////
-
-    UIkit.countdown(countdown);
-
-    //////////////////////////////////////////////////////
-    // STATUS
-    //////////////////////////////////////////////////////
-
-    document.getElementById("status").innerHTML =
-    `Subscription active until:<br><strong>${expireDate}</strong>`;
-
-    //////////////////////////////////////////////////////
-    // CHECK EXPIRATION
-    //////////////////////////////////////////////////////
-
-    const expireTime = new Date(expireDate).getTime();
-
-    const timer = setInterval(() => {
-
-        const now = Date.now();
-
-        if (now >= expireTime) {
-
-            clearInterval(timer);
-
-            document.getElementById("status").innerHTML =
-            "Subscription expired. Redirecting...";
-
-            window.location.href = REDIRECT_URL;
-
+        // =========================
+        // 🚨 HARD KILL SWITCH
+        // =========================
+        if (license.disabled === true) {
+            lock("Account disabled by reseller");
+            return;
         }
 
-    }, 1000);
+        // =========================
+        // INIT COUNTDOWN
+        // =========================
+        countdownEl.setAttribute(
+            "uk-countdown",
+            `date: ${license.expires}`
+        );
 
-})
+        UIkit.countdown(countdownEl);
 
-.catch(error => {
+        status.innerHTML =
+            `<b>Client:</b> ${license.client}<br>` +
+            `<b>Expires:</b> ${license.expires}`;
 
-    console.error(error);
+        // =========================
+        // EXPIRATION CHECK
+        // =========================
+        const timer = setInterval(() => {
 
-    document.getElementById("status").innerHTML =
-    "Unable to verify subscription.";
+            if (Date.now() >= expireTime) {
+                clearInterval(timer);
+                lock("Subscription expired");
+            }
+
+        }, 1000);
+
+        // =========================
+        // LOCK FUNCTION
+        // =========================
+        function lock(reason) {
+
+            document.body.innerHTML = `
+                <div class="uk-container uk-padding">
+                    <div class="uk-alert-danger uk-padding">
+                        <h3>Access Restricted</h3>
+                        <p>${reason}</p>
+                        <p>Redirecting...</p>
+                    </div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                window.location.href = redirectURL;
+            }, 2000);
+        }
+
+    })
+    .catch(err => {
+
+        status.innerHTML =
+            "<b>Error:</b> Unable to load license";
+
+        console.error(err);
+
+    });
 
 });
-
 </script>
 
 </body>
