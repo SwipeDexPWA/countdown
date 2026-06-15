@@ -14,114 +14,92 @@
 
 <body class="uk-container uk-padding">
 
-<h2>Reseller PWA License System</h2>
-
-<div id="status" class="uk-alert-primary uk-padding-small uk-margin" uk-alert>
-Loading license...
-</div>
-
-<div id="app">
-
-<!-- COUNTDOWN -->
-<div id="countdown"
-     class="uk-grid-small uk-child-width-auto uk-text-center uk-margin-large-top"
-     uk-grid
-     uk-countdown>
-
-    <div><div class="uk-h1 uk-countdown-number uk-countdown-days"></div><div>Days</div></div>
-    <div class="uk-h1">:</div>
-    <div><div class="uk-h1 uk-countdown-number uk-countdown-hours"></div><div>Hours</div></div>
-    <div class="uk-h1">:</div>
-    <div><div class="uk-h1 uk-countdown-number uk-countdown-minutes"></div><div>Minutes</div></div>
-    <div class="uk-h1">:</div>
-    <div><div class="uk-h1 uk-countdown-number uk-countdown-seconds"></div><div>Seconds</div></div>
-
-</div>
-
+<!-- COUNTDOWN (plain text) -->
+<div id="countdown" class="uk-text-normal uk-margin-large-top">
+    00Y 00D 00H 00M 00S
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+const status = document.getElementById("status");
+const countdownEl = document.getElementById("countdown");
 
-    const status = document.getElementById("status");
-    const countdownEl = document.getElementById("countdown");
+const LICENSE_URL = "client1.json";
 
-    const LICENSE_URL = "client1.json";
+fetch(LICENSE_URL)
+.then(res => {
+    if (!res.ok) throw new Error("License file not found");
+    return res.json();
+})
+.then(license => {
 
-    fetch(LICENSE_URL)
-    .then(res => {
-        if (!res.ok) throw new Error("License file not found");
-        return res.json();
-    })
-    .then(license => {
+    const expireTime = new Date(license.expires).getTime();
+    const redirectURL = license.redirect;
 
-        const expireTime = new Date(license.expires).getTime();
-        const redirectURL = license.redirect;
+    // 🚨 disabled check
+    if (license.disabled === true) {
+        lock("Account disabled by reseller");
+        return;
+    }
 
-        // =========================
-        // 🚨 HARD KILL SWITCH
-        // =========================
-        if (license.disabled === true) {
-            lock("Account disabled by reseller");
-            return;
-        }
+    function updateCountdown() {
+    const now = Date.now();
+    let diff = expireTime - now;
 
-        // =========================
-        // INIT COUNTDOWN
-        // =========================
-        countdownEl.setAttribute(
-            "uk-countdown",
-            `date: ${license.expires}`
-        );
+    if (diff <= 0) {
+        clearInterval(timer);
+        lock("Subscription expired");
+        return;
+    }
 
-        UIkit.countdown(countdownEl);
+    const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365));
+    diff %= (1000 * 60 * 60 * 24 * 365);
 
-        status.innerHTML =
-            `<b>Client:</b> ${license.client}<br>` +
-            `<b>Expires:</b> ${license.expires}`;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    diff %= (1000 * 60 * 60 * 24);
 
-        // =========================
-        // EXPIRATION CHECK
-        // =========================
-        const timer = setInterval(() => {
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    diff %= (1000 * 60 * 60);
 
-            if (Date.now() >= expireTime) {
-                clearInterval(timer);
-                lock("Subscription expired");
-            }
+    const minutes = Math.floor(diff / (1000 * 60));
+    diff %= (1000 * 60);
 
-        }, 1000);
+    const seconds = Math.floor(diff / 1000);
 
-        // =========================
-        // LOCK FUNCTION
-        // =========================
-        function lock(reason) {
+    countdownEl.textContent =
+        `${String(years).padStart(2, "0")}Y ` +
+        `${String(days).padStart(2, "0")}D ` +
+        `${String(hours).padStart(2, "0")}H ` +
+        `${String(minutes).padStart(2, "0")}M ` +
+        `${String(seconds).padStart(2, "0")}S`;
+}
 
-            document.body.innerHTML = `
-                <div class="uk-container uk-padding">
-                    <div class="uk-alert-danger uk-padding">
-                        <h3>Access Restricted</h3>
-                        <p>${reason}</p>
-                        <p>Redirecting...</p>
-                    </div>
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+
+    status.innerHTML =
+        `<b>Client:</b> ${license.client}<br>` +
+        `<b>Expires:</b> ${license.expires}`;
+
+    function lock(reason) {
+        document.body.innerHTML = `
+            <div class="uk-container uk-padding">
+                <div class="uk-alert-danger uk-padding">
+                    <h3>Access Restricted</h3>
+                    <p>${reason}</p>
+                    <p>Redirecting...</p>
                 </div>
-            `;
+            </div>
+        `;
 
-            setTimeout(() => {
-                window.location.href = redirectURL;
-            }, 2000);
-        }
+        setTimeout(() => {
+            window.location.href = redirectURL;
+        }, 2000);
+    }
 
-    })
-    .catch(err => {
-
-        status.innerHTML =
-            "<b>Error:</b> Unable to load license";
-
-        console.error(err);
-
-    });
-
+})
+.catch(err => {
+    status.innerHTML = "<b>Error:</b> Unable to load license";
+    console.error(err);
 });
 </script>
 
