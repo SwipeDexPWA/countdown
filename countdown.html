@@ -6,24 +6,18 @@
 
 <title>PWA Reseller License System</title>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.16/dist/css/uikit.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/uikit@3.21.16/dist/js/uikit.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/uikit@3.21.16/dist/js/uikit-icons.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.16/dist/css/uikit.min.css">
 
 </head>
-
 <body class="uk-container uk-padding">
 
-<!-- COUNTDOWN (plain text) -->
 <div id="countdown" class="uk-text-normal uk-margin-large-top">
     00Y 00D 00H 00M 00S
 </div>
 
 <script>
-const status = document.getElementById("status");
 const countdownEl = document.getElementById("countdown");
-
-const LICENSE_URL = "client1.json";
+const LICENSE_URL = "./client1.json";
 
 fetch(LICENSE_URL)
 .then(res => {
@@ -35,52 +29,8 @@ fetch(LICENSE_URL)
     const expireTime = new Date(license.expires).getTime();
     const redirectURL = license.redirect;
 
-    // 🚨 disabled check
-    if (license.disabled === true) {
-        lock("Account disabled by reseller");
-        return;
-    }
-
-    function updateCountdown() {
-    const now = Date.now();
-    let diff = expireTime - now;
-
-    if (diff <= 0) {
-        clearInterval(timer);
-        lock("Subscription expired");
-        return;
-    }
-
-    const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365));
-    diff %= (1000 * 60 * 60 * 24 * 365);
-
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    diff %= (1000 * 60 * 60 * 24);
-
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    diff %= (1000 * 60 * 60);
-
-    const minutes = Math.floor(diff / (1000 * 60));
-    diff %= (1000 * 60);
-
-    const seconds = Math.floor(diff / 1000);
-
-    countdownEl.textContent =
-        `${String(years).padStart(2, "0")}Y ` +
-        `${String(days).padStart(2, "0")}D ` +
-        `${String(hours).padStart(2, "0")}H ` +
-        `${String(minutes).padStart(2, "0")}M ` +
-        `${String(seconds).padStart(2, "0")}S`;
-}
-
-    updateCountdown();
-    const timer = setInterval(updateCountdown, 1000);
-
-    status.innerHTML =
-        `<b>Client:</b> ${license.client}<br>` +
-        `<b>Expires:</b> ${license.expires}`;
-
     function lock(reason) {
+
         document.body.innerHTML = `
             <div class="uk-container uk-padding">
                 <div class="uk-alert-danger uk-padding">
@@ -96,9 +46,62 @@ fetch(LICENSE_URL)
         }, 2000);
     }
 
+    // Disabled account
+    if (license.disabled === true) {
+        lock("Account disabled by reseller");
+        return;
+    }
+
+    // Already expired
+    if (Date.now() >= expireTime) {
+        lock("Subscription expired");
+        return;
+    }
+
+    function updateCountdown() {
+
+        let diff = expireTime - Date.now();
+
+        if (diff <= 0) {
+            clearInterval(timer);
+            lock("Subscription expired");
+            return;
+        }
+
+        const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365));
+        diff %= (1000 * 60 * 60 * 24 * 365);
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        diff %= (1000 * 60 * 60 * 24);
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        diff %= (1000 * 60 * 60);
+
+        const minutes = Math.floor(diff / (1000 * 60));
+        diff %= (1000 * 60);
+
+        const seconds = Math.floor(diff / 1000);
+
+        countdownEl.textContent =
+            `${String(years).padStart(2, "0")}Y ` +
+            `${String(days).padStart(2, "0")}D ` +
+            `${String(hours).padStart(2, "0")}H ` +
+            `${String(minutes).padStart(2, "0")}M ` +
+            `${String(seconds).padStart(2, "0")}S`;
+    }
+
+    updateCountdown();
+    const timer = setInterval(updateCountdown, 1000);
+
 })
 .catch(err => {
-    status.innerHTML = "<b>Error:</b> Unable to load license";
+
+    document.body.innerHTML = `
+        <div class="uk-alert-danger uk-padding">
+            Unable to load license file.
+        </div>
+    `;
+
     console.error(err);
 });
 </script>
