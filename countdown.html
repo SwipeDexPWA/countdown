@@ -35,10 +35,10 @@ fetch("./data.json")
     }
 
     // STEP 3: allow app to show
-    document.getElementById("app").style.display = "block";
+    document.getElementById("pwa").style.display = "block";
 
     function lock() {
-    document.getElementById("app").style.display = "none";
+    document.getElementById("pwa").style.display = "none";
     UIkit.modal("#license-modal").show();
 
     document.getElementById("contact-provider").onclick = () => {
@@ -49,7 +49,7 @@ fetch("./data.json")
 });
 </script>
     <style>
-#app {
+#pwa {
     display: none;
 }
         h2 {
@@ -73,7 +73,7 @@ fetch("./data.json")
 </style>
 </head>
 <body>
-<div id="app">
+<div id="pwa">
 <span id="countdown">00Y 00D 00H 00M 00S</span>
 </div>
 
