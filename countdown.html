@@ -9,6 +9,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.25.17/dist/css/uikit.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/uikit@3.25.17/dist/js/uikit.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/uikit@3.25.17/dist/js/uikit-icons.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+    
 <script>
 fetch("./data.json")
 .then(r => r.json())
@@ -47,6 +52,15 @@ fetch("./data.json")
 #app {
     display: none;
 }
+        h3 {
+            font-family: Montserrat;
+        }
+        h5 {
+            font-family: Montserrat;
+        }
+        p {
+            font-family: Poppins;
+        }
 </style>
 </head>
 <body>
@@ -58,7 +72,7 @@ fetch("./data.json")
         <div class="uk-modal-dialog uk-margin-auto-vertical uk-text-center uk-padding uk-position-relative" uk-height-viewport>
             <div class="uk-position-center">
                 <h2>Subscription Renewal Required</h2>
-            <h4>Subscription has Expired or has been Disabled.</h4>
+            <h5>Subscription has Expired or has been Disabled.</h5>
             <p>
                 To Renew your Subscription or Reactivate your Account,
                 Please Contact your Provider.
