@@ -9,11 +9,50 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.25.17/dist/css/uikit.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/uikit@3.25.17/dist/js/uikit.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/uikit@3.25.17/dist/js/uikit-icons.min.js"></script>
+<script>
+fetch("./data.json")
+.then(r => r.json())
+.then(data => {
 
+    const license = data.license;
+    const expireTime = new Date(license.expires).getTime();
+
+    // STEP 1: check disabled
+    if (license.disabled) {
+        lock();
+        return;
+    }
+
+    // STEP 2: check expired
+    if (Date.now() >= expireTime) {
+        lock();
+        return;
+    }
+
+    // STEP 3: allow app to show
+    document.getElementById("app").style.display = "block";
+
+    function lock() {
+    document.getElementById("app").style.display = "none";
+    UIkit.modal("#license-modal").show();
+
+    document.getElementById("contact-provider").onclick = () => {
+        window.location.href = license.redirect;
+    };
+}
+
+});
+</script>
+    <style>
+#app {
+    display: none;
+}
+</style>
 </head>
 <body>
-
+<div id="app">
 <span id="countdown">00Y 00D 00H 00M 00S</span>
+</div>
 
     <div id="license-modal" uk-modal="bg-close: false; esc-close: false">
         <div class="uk-modal-dialog uk-modal-body uk-text-center">
