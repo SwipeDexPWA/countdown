@@ -6,83 +6,94 @@
 
 <title>PWA Reseller License System</title>
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.25.17/dist/css/uikit.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.25.17/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.25.17/dist/js/uikit-icons.min.js"></script>
+
 </head>
 <body>
 
 <span id="countdown">00Y 00D 00H 00M 00S</span>
 
+    <div id="license-modal" uk-modal="bg-close: false; esc-close: false">
+        <div class="uk-modal-dialog uk-modal-body uk-text-center">
+            <h3>Subscription Renewal Required</h3>
+            <p>
+                This digital business card subscription has expired or has been disabled.
+            </p>
+            <p>
+                To renew your subscription, request updates, or reactivate your account,
+                please contact your provider.
+            </p>
+            <button id="contact-provider" class="uk-button uk-button-primary">
+                Contact Provider
+            </button>
+        </div>
+    </div>
+
 <script>
 const countdownEl = document.getElementById("countdown");
-
 fetch("data.json")
-.then(res => {
+  .then(res => {
     if (!res.ok) throw new Error("Unable to load data.json");
     return res.json();
-})
-.then(siteData => {
-
+  })
+  .then(siteData => {
     const license = siteData.license;
+    function showLicenseDialog() {
 
+      UIkit.modal("#license-modal").show();
+
+      document.getElementById("contact-provider").onclick = () => {
+        window.location.href = license.redirect;
+      };
+
+    }
     if (!license) return;
-
     const expireTime = new Date(license.expires).getTime();
     const redirectURL = license.redirect;
-
     function redirect() {
-        window.location.replace(redirectURL);
+      window.location.replace(redirectURL);
     }
-
     // Disabled by reseller
     if (license.disabled) {
-        redirect();
-        return;
+      showLicenseDialog();
+      return;
     }
-
     // Already expired
     if (Date.now() >= expireTime) {
-        redirect();
-        return;
+      showLicenseDialog();
+      return;
     }
-
     function updateCountdown() {
-
-        let diff = expireTime - Date.now();
-
-        if (diff <= 0) {
-            clearInterval(timer);
-            redirect();
-            return;
-        }
-
-        const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365));
-        diff %= (1000 * 60 * 60 * 24 * 365);
-
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        diff %= (1000 * 60 * 60 * 24);
-
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        diff %= (1000 * 60 * 60);
-
-        const minutes = Math.floor(diff / (1000 * 60));
-        diff %= (1000 * 60);
-
-        const seconds = Math.floor(diff / 1000);
-
-        countdownEl.textContent =
-            `${String(years).padStart(2, "0")}Y ` +
-            `${String(days).padStart(2, "0")}D ` +
-            `${String(hours).padStart(2, "0")}H ` +
-            `${String(minutes).padStart(2, "0")}M ` +
-            `${String(seconds).padStart(2, "0")}S`;
+      let diff = expireTime - Date.now();
+      if (diff <= 0) {
+        clearInterval(timer);
+        showLicenseDialog();
+        return;
+      }
+      const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365));
+      diff %= (1000 * 60 * 60 * 24 * 365);
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      diff %= (1000 * 60 * 60 * 24);
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      diff %= (1000 * 60 * 60);
+      const minutes = Math.floor(diff / (1000 * 60));
+      diff %= (1000 * 60);
+      const seconds = Math.floor(diff / 1000);
+      countdownEl.textContent =
+        `${String(years).padStart(2, "0")}Y ` +
+        `${String(days).padStart(2, "0")}D ` +
+        `${String(hours).padStart(2, "0")}H ` +
+        `${String(minutes).padStart(2, "0")}M ` +
+        `${String(seconds).padStart(2, "0")}S`;
     }
-
     updateCountdown();
     const timer = setInterval(updateCountdown, 1000);
-
-})
-.catch(error => {
+  })
+  .catch(error => {
     console.error(error);
-});
+  });
 </script>
 
 </body>
