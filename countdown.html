@@ -6,8 +6,6 @@
 
 <title>PWA Reseller License System</title>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.16/dist/css/uikit.min.css">
-
 </head>
 <body>
 
@@ -15,44 +13,34 @@
 
 <script>
 const countdownEl = document.getElementById("countdown");
-const LICENSE_URL = "./client1.json";
 
-fetch(LICENSE_URL)
+fetch("data.json")
 .then(res => {
-    if (!res.ok) throw new Error("License file not found");
+    if (!res.ok) throw new Error("Unable to load data.json");
     return res.json();
 })
-.then(license => {
+.then(siteData => {
+
+    const license = siteData.license;
+
+    if (!license) return;
 
     const expireTime = new Date(license.expires).getTime();
     const redirectURL = license.redirect;
 
-    function lock(reason) {
-
-        document.body.innerHTML = `
-            <div class="uk-container uk-padding">
-                <div class="uk-alert-danger uk-padding">
-                    <h3>Access Restricted</h3>
-                    <p>${reason}</p>
-                    <p>Redirecting...</p>
-                </div>
-            </div>
-        `;
-
-        setTimeout(() => {
-            window.location.href = redirectURL;
-        }, 2000);
+    function redirect() {
+        window.location.replace(redirectURL);
     }
 
-    // Disabled account
-    if (license.disabled === true) {
-        lock("Account disabled by reseller");
+    // Disabled by reseller
+    if (license.disabled) {
+        redirect();
         return;
     }
 
     // Already expired
     if (Date.now() >= expireTime) {
-        lock("Subscription expired");
+        redirect();
         return;
     }
 
@@ -62,7 +50,7 @@ fetch(LICENSE_URL)
 
         if (diff <= 0) {
             clearInterval(timer);
-            lock("Subscription expired");
+            redirect();
             return;
         }
 
@@ -92,15 +80,8 @@ fetch(LICENSE_URL)
     const timer = setInterval(updateCountdown, 1000);
 
 })
-.catch(err => {
-
-    document.body.innerHTML = `
-        <div class="uk-alert-danger uk-padding">
-            Unable to load license file.
-        </div>
-    `;
-
-    console.error(err);
+.catch(error => {
+    console.error(error);
 });
 </script>
 
